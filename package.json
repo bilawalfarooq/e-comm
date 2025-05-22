@@ -25,5 +25,17 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "vite": "^6.3.5"
-  }
+  },
+  "description": "ShopEase is a frontend-only e-commerce web application built with React.js and plain CSS. It integrates with the DummyJSON API to display product listings dynamically. Users can browse products, view product details, and manage a shopping cart.",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bilawalfarooq/e-comm.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bilawalfarooq/e-comm/issues"
+  },
+  "homepage": "https://github.com/bilawalfarooq/e-comm#readme"
 }

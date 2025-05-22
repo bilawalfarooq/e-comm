@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import "../styles/App.css";
 import { WishlistContext } from "../context/WishlistContext";
+import ProductCard from "../components/ProductCard";
 
 const Wishlist = () => {
   const { wishlist, removeFromWishlist } = useContext(WishlistContext);
@@ -13,21 +14,7 @@ const Wishlist = () => {
       ) : (
         <div className="product-grid">
           {wishlist.map((item) => (
-            <div className="product-card" key={item.id}>
-              <img
-                src={item.images[0]}
-                alt={item.title}
-                className="product-image"
-              />
-              <h3>{item.title}</h3>
-              <p className="product-price">${item.price}</p>
-              <button
-                onClick={() => removeFromWishlist(item.id)}
-                className="remove-btn"
-              >
-                Remove
-              </button>
-            </div>
+            <ProductCard key={item.id} product={item} onAddToCart={() => {}} />
           ))}
         </div>
       )}

@@ -1,11 +1,12 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 
-const ProductDetail = ({ products }) => {
+const ProductDetail = ({ products = [] }) => {
   const { id } = useParams();
-  const { addToCart } = useContext(CartContext);
-  const product = products.find((p) => p.id === parseInt(id));
+  const { cart, addToCart, removeFromCart, decrementFromCart } = useContext(CartContext);
+  const [product, setProduct] = useState(() => products.find((p) => p.id === parseInt(id)));
+  const [loading, setLoading] = useState(!product);
 
   // Demo reviews state
   const [reviews, setReviews] = useState([
@@ -14,7 +15,26 @@ const ProductDetail = ({ products }) => {
   ]);
   const [newReview, setNewReview] = useState({ user: "", rating: 5, comment: "" });
 
-  if (!product) return <div>Product not found.</div>;
+  useEffect(() => {
+    if (!product) {
+      setLoading(true);
+      fetch(`https://dummyjson.com/products/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          setProduct(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [id, product]);
+
+  if (loading) return <div className="container">Loading product...</div>;
+  if (!product) return <div className="container">Product not found.</div>;
+
+  // Only access cartItem after product is defined
+  const cartItem = cart.find((item) => item.id === product.id);
+  const isInCart = !!cartItem;
+  const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleReviewChange = (e) => {
     setNewReview({ ...newReview, [e.target.name]: e.target.value });
@@ -30,12 +50,26 @@ const ProductDetail = ({ products }) => {
 
   return (
     <div className="container product-detail">
-      <img src={product.images[0]} alt={product.title} className="detail-image" />
+      <img src={product.images?.[0] || product.thumbnail} alt={product.title} className="detail-image" />
       <div className="detail-info">
         <h2>{product.title}</h2>
         <p>{product.description}</p>
         <p className="product-price">${product.price}</p>
-        <button onClick={() => addToCart(product)} className="add-to-cart-btn">Add to Cart</button>
+        {isInCart ? (
+          <div className="cart-qty-controls" style={{ marginBottom: 16 }}>
+            <button
+              className="qty-btn"
+              onClick={() => decrementFromCart(product.id)}
+            >-</button>
+            <span className="qty-value">{quantity}</span>
+            <button
+              className="qty-btn"
+              onClick={() => addToCart(product)}
+            >+</button>
+          </div>
+        ) : (
+          <button onClick={() => addToCart(product)} className="add-to-cart-btn">Add to Cart</button>
+        )}
         <div className="reviews-section">
           <h3>Product Reviews</h3>
           {reviews.length === 0 ? <p>No reviews yet.</p> : (

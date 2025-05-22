@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Category = ({ products }) => {
   const { addToCart } = React.useContext(CartContext);
   const { addToWishlist, removeFromWishlist, wishlist } = React.useContext(WishlistContext);
   const { search } = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(search);
   const category = params.get("name");
   const [filtered, setFiltered] = useState([]);
@@ -20,6 +21,10 @@ const Category = ({ products }) => {
     }
   }, [category, products]);
 
+  const handleCardClick = (id) => {
+    navigate(`/product/${id}`);
+  };
+
   return (
     <div className="container category-container">
       <h2>Category: {category ? category.charAt(0).toUpperCase() + category.slice(1) : "All"}</h2>
@@ -28,7 +33,9 @@ const Category = ({ products }) => {
           <p>No products found in this category.</p>
         ) : (
           filtered.map((product) => (
-            <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+            <div key={product.id} onClick={() => handleCardClick(product.id)}>
+              <ProductCard product={product} onAddToCart={addToCart} />
+            </div>
           ))
         )}
       </div>

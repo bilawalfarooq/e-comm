@@ -17,6 +17,7 @@ const Cart = () => {
             <CartItem key={item.id} item={item} onRemove={removeFromCart} />
           ))}
           <div className="cart-total">Total: ${total.toFixed(2)}</div>
+          <a href="/checkout" className="checkout-btn">Proceed to Checkout</a>
         </>
       )}
     </div>
