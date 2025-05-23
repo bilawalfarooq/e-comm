@@ -21,6 +21,7 @@ const couponRoutes = require('./routes/coupon');
 const reviewRoutes = require('./routes/review');
 const wishlistRoutes = require('./routes/wishlist');
 const recentlyViewedRoutes = require('./routes/recentlyViewed');
+const userRoutes = require('./routes/user');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -29,6 +30,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/recently-viewed', recentlyViewedRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
