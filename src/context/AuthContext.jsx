@@ -3,6 +3,21 @@ import React, { createContext, useState } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  // Demo accounts: one admin, one user
+  React.useEffect(() => {
+    const demoUsers = [
+      { name: "Admin", email: "admin@shopease.com", password: "admin123", role: "admin" },
+      { name: "Demo User", email: "user@shopease.com", password: "user123", role: "user" }
+    ];
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    demoUsers.forEach(demo => {
+      if (!users.find(u => u.email === demo.email)) {
+        users.push(demo);
+      }
+    });
+    localStorage.setItem("users", JSON.stringify(users));
+  }, []);
+
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;

@@ -10,7 +10,7 @@ const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { cart } = useContext(CartContext);
-  const { isAuthenticated, user, logout } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
     setShowUserMenu(false);
   };
 
@@ -100,7 +100,7 @@ const Header = () => {
 
         {/* Right Side Actions */}
         <div className="header__actions">
-          {isAuthenticated ? (
+          {user ? (
             <>
               <Link to="/cart" className="icon-btn cart-icon" aria-label="Cart">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -112,13 +112,14 @@ const Header = () => {
                 <button 
                   className="user-menu-btn"
                   onClick={() => setShowUserMenu(!showUserMenu)}
+                  aria-label="User menu"
                 >
                   <div className="user-avatar">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 </button>
                 {showUserMenu && (
-                  <div className="user-dropdown">
+                  <div className="user-dropdown" tabIndex={0} onBlur={() => setShowUserMenu(false)}>
                     <div className="user-dropdown-header">
                       <strong>{user.name}</strong>
                       <small>{user.email}</small>

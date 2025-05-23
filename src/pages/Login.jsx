@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/App.css";
 
 const Login = () => {
@@ -8,6 +8,7 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,13 +16,25 @@ const Login = () => {
 
   const handleSubmit = e => {
     e.preventDefault();
-    if (!form.email.match(/^\S+@\S+\.\S+$/) || form.password.length < 4) {
+    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) || form.password.length < 4) {
       setError("Please enter valid credentials.");
       return;
     }
     const res = login(form.email, form.password);
     if (res.success) {
-      navigate("/");
+      // If redirected from a protected route, go back to that page
+      const from = location.state?.from;
+      if (from) {
+        navigate(from, { replace: true });
+      } else {
+        // Otherwise, redirect based on role
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user?.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      }
     } else {
       setError(res.message);
     }

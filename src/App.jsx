@@ -1,3 +1,4 @@
+import "./styles/admin-panel.css";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
@@ -21,10 +22,12 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import AdminPanel from "./pages/AdminPanel";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdminRoute, setIsAdminRoute] = useState(window.location.pathname.startsWith("/admin"));
 
   useEffect(() => {
     fetch("https://dummyjson.com/products")
@@ -35,13 +38,36 @@ const App = () => {
       });
   }, []);
 
+  useEffect(() => {
+    const handleRouteChange = () => {
+      const isAdmin = window.location.pathname.startsWith("/admin");
+      setIsAdminRoute(isAdmin);
+      if (isAdmin) {
+        document.body.classList.add("admin-panel-active");
+      } else {
+        document.body.classList.remove("admin-panel-active");
+      }
+    };
+    handleRouteChange();
+    window.addEventListener("popstate", handleRouteChange);
+    window.addEventListener("pushstate", handleRouteChange);
+    window.addEventListener("replacestate", handleRouteChange);
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+      window.removeEventListener("pushstate", handleRouteChange);
+      window.removeEventListener("replacestate", handleRouteChange);
+    };
+  }, []);
+
   return (
     <ToastProvider>
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
             <Router>
-              <Header />
+              {/* Hide Header and Footer for all /admin routes */}
+              {!isAdminRoute && <Header />}
+              {/* Hide Sidebar for non-admin routes */}
               {loading ? (
                 <div className="container">Loading products...</div>
               ) : (
@@ -54,15 +80,31 @@ const App = () => {
                   <Route path="/login" element={<Login />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/account" element={
+                    <ProtectedRoute role="user">
+                      <Account />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/checkout" element={
+                    <ProtectedRoute role="user">
+                      <Checkout />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/wishlist" element={
+                    <ProtectedRoute role="user">
+                      <Wishlist />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/category" element={<Category products={products} />} />
-                  <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/admin" element={
+                    <ProtectedRoute role="admin">
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  } />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               )}
-              <Footer />
+              {!isAdminRoute && <Footer />}
             </Router>
           </WishlistProvider>
         </CartProvider>
