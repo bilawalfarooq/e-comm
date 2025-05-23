@@ -1,96 +1,170 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/App.css";
 import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
 
 const Header = () => {
-  const [search, setSearch] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [showSearch, setShowSearch] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
   const { cart } = useContext(CartContext);
+  const { isAuthenticated, user, logout } = useContext(AuthContext);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
-    fetch("https://dummyjson.com/products/categories")
+    fetch("https://dummyjson.com/products/category-list")
       .then((res) => res.json())
       .then((data) => setCategories(data));
   }, []);
 
-  const handleSearchChange = (e) => setSearch(e.target.value);
-  const handleSearchSubmit = (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
-    if (search.trim()) {
-      window.location.href = `/products?search=${encodeURIComponent(search)}`;
-      setShowSearch(false);
+    const searchInput = e.target.querySelector('input');
+    const searchTerm = searchInput.value.trim();
+    
+    if (searchTerm.length < 2) {
+      // Show minimal validation
+      searchInput.classList.add('error');
+      setTimeout(() => searchInput.classList.remove('error'), 2000);
+      return;
     }
+
+    setIsSearching(true);
+    navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
+    searchInput.value = '';
+    setIsSearching(false);
   };
 
-  const toggleMenu = () => setMenuOpen((open) => !open);
-  const closeMenu = () => setMenuOpen(false);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+    setShowUserMenu(false);
+  };
 
   return (
     <header className="header">
-      <div className="header__content container">
-        <h1 className="header__logo">
-          <Link to="/">ShopEase</Link>
-        </h1>
-        <button className="search-icon-btn" onClick={() => setShowSearch(true)} aria-label="Open search">
-          <svg className="search-icon" width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="#2563eb" strokeWidth="2"/><path stroke="#2563eb" strokeWidth="2" strokeLinecap="round" d="M20 20l-3.5-3.5"/></svg>
-        </button>
-        <button className="hamburger" onClick={toggleMenu} aria-label="Toggle navigation">
-          <span className={menuOpen ? "bar open" : "bar"}></span>
-          <span className={menuOpen ? "bar open" : "bar"}></span>
-          <span className={menuOpen ? "bar open" : "bar"}></span>
-        </button>
-        <nav className={`header__nav${menuOpen ? " open" : ""}`}>
-          <Link to="/" onClick={closeMenu}>Home</Link>
-          <Link to="/products" onClick={closeMenu}>Products</Link>
+      <div className="header__content">
+        {/* Logo */}
+        <Link to="/" className="header__logo">
+          ShopEase
+        </Link>
+
+        {/* Main Navigation */}
+        <nav className="header__nav">
+          <Link to="/">Home</Link>
+          <Link to="/products">Products</Link>
           <div className="nav-dropdown">
             <span className="nav-dropdown-label">Categories ▾</span>
             <div className="nav-dropdown-list">
-              {categories.map((cat) => {
-                const name = typeof cat === "string" ? cat : cat.name;
+              {categories.map((category) => {
+                const categoryStr = String(category);
                 return (
-                  <Link
-                    key={typeof cat === "string" ? cat : cat.slug}
-                    to={`/category?name=${encodeURIComponent(name)}`}
-                    onClick={closeMenu}
-                    className="nav-dropdown-item"
+                  <Link 
+                    key={categoryStr}
+                    to={`/category?name=${encodeURIComponent(categoryStr)}`}
                   >
-                    {name.charAt(0).toUpperCase() + name.slice(1)}
+                    {categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1)}
                   </Link>
                 );
               })}
             </div>
           </div>
-          <Link to="/cart" onClick={closeMenu} className="cart-link" aria-label="Cart">
-            <svg className="cart-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#2563eb" strokeWidth="2" d="M6.5 6.5h11l-1.5 9.5h-8z"/><circle cx="9" cy="20" r="1.5" fill="#2563eb"/><circle cx="15" cy="20" r="1.5" fill="#2563eb"/></svg>
-            <span className="cart-count">{cartCount}</span>
-          </Link>
-          <Link to="/wishlist" onClick={closeMenu}>Wishlist</Link>
-          <Link to="/about" onClick={closeMenu}>About</Link>
-          <Link to="/contact" onClick={closeMenu}>Contact</Link>
-          <Link to="/login" onClick={closeMenu}>Login</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
         </nav>
-        {showSearch && (
-          <div className="search-modal" onClick={() => setShowSearch(false)}>
-            <div className="search-modal-content" onClick={e => e.stopPropagation()}>
-              <form className="header__search" onSubmit={handleSearchSubmit}>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={search}
-                  onChange={handleSearchChange}
-                  className="search-input"
-                  autoFocus
-                />
-                <button type="submit" className="search-btn">Search</button>
-              </form>
-              <button className="search-modal-close" onClick={() => setShowSearch(false)} aria-label="Close search">&times;</button>
+
+        {/* Search form */}
+        <div className="header__search">
+          <form onSubmit={handleSearch}>
+            <input 
+              type="text" 
+              placeholder="Search products..."
+              className="search-input"
+              defaultValue={new URLSearchParams(window.location.search).get('search') || ''}
+              min="2"
+              aria-label="Search products"
+              disabled={isSearching}
+            />
+            <button 
+              type="submit" 
+              className="search-btn" 
+              aria-label="Search"
+              disabled={isSearching}
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Side Actions */}
+        <div className="header__actions">
+          {isAuthenticated ? (
+            <>
+              <Link to="/cart" className="icon-btn cart-icon" aria-label="Cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3H5L5.4 5M7.8 14H20L23 5H5.4M7.8 14L5.4 5M7.8 14L4.8 17M20 17H6.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              </Link>
+              <div className="user-menu">
+                <button 
+                  className="user-menu-btn"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                >
+                  <div className="user-avatar">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+                {showUserMenu && (
+                  <div className="user-dropdown">
+                    <div className="user-dropdown-header">
+                      <strong>{user.name}</strong>
+                      <small>{user.email}</small>
+                    </div>
+                    <div className="user-dropdown-content">
+                      <Link to="/account" onClick={() => setShowUserMenu(false)}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        My Account
+                      </Link>
+                      <Link to="/wishlist" onClick={() => setShowUserMenu(false)}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                        Wishlist
+                      </Link>
+                      {user.role === 'admin' && (
+                        <Link to="/admin" onClick={() => setShowUserMenu(false)}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                          </svg>
+                          Admin Panel
+                        </Link>
+                      )}
+                      <button onClick={handleLogout} className="logout-menu-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                          <polyline points="16 17 21 12 16 7" />
+                          <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="auth-buttons">
+              <Link to="/login" className="login-btn">Login</Link>
+              <Link to="/signup" className="signup-btn">Sign Up</Link>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

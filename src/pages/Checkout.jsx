@@ -1,5 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
+import OrderTracking from "../components/OrderTracking";
+import AddressAutocomplete from "../components/AddressAutocomplete";
 
 const initialForm = {
   name: "",
@@ -22,10 +25,61 @@ function getCardType(number) {
 
 const Checkout = () => {
   const { cart, removeFromCart } = useContext(CartContext);
-  const [form, setForm] = useState(initialForm);
+  const { user } = useContext(AuthContext);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    payment: "card",
+    cardNumber: "",
+    cardExpiry: "",
+    cardCVV: ""
+  });
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useDefaultAddress, setUseDefaultAddress] = useState(true);
+  
+  // Load user's saved information
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        // Use saved address if available
+        address: user.savedAddress?.address || "",
+        city: user.savedAddress?.city || "",
+        state: user.savedAddress?.state || "",
+        zip: user.savedAddress?.zip || ""
+      }));
+    }
+  }, [user]);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = subtotal > 100 ? 0 : 10;
+  const total = subtotal + shipping;
+
+  const handleAddressSelect = (address) => {
+    setForm(prev => ({
+      ...prev,
+      address: address.street,
+      city: address.city,
+      state: address.state,
+      zip: address.zip
+    }));
+    // Clear any address-related errors
+    setErrors(prev => ({
+      ...prev,
+      address: null,
+      city: null,
+      state: null,
+      zip: null
+    }));
+  };
 
   const validate = () => {
     const errs = {};
@@ -48,15 +102,29 @@ const Checkout = () => {
     if (name === "cardNumber") value = value.replace(/\D/g, "").slice(0, 16);
     if (name === "cardCVV") value = value.replace(/\D/g, "").slice(0, 3);
     setForm({ ...form, [name]: value });
+    // Clear errors when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: null });
+    }
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    cart.forEach(item => removeFromCart(item.id));
-    setSubmitted(true);
+
+    setIsSubmitting(true);
+    // Simulate API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      cart.forEach(item => removeFromCart(item.id));
+      setSubmitted(true);
+    } catch (error) {
+      setErrors({ submit: "An error occurred. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const cardType = getCardType(form.cardNumber);
@@ -64,104 +132,315 @@ const Checkout = () => {
   if (submitted) {
     return (
       <div className="container checkout-container">
-        <h2>Thank you for your order!</h2>
-        <p>Your order has been placed successfully. (Demo only)</p>
+        <div className="order-success">
+          <svg className="success-icon" viewBox="0 0 24 24" width="64" height="64">
+            <path fill="none" stroke="currentColor" strokeWidth="2" d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <path fill="none" stroke="currentColor" strokeWidth="2" d="M22 4L12 14.01l-3-3"/>
+          </svg>
+          <h2>Thank you for your order!</h2>
+          <p className="order-id">Order #{Math.floor(Math.random() * 1000000)}</p>
+          <p className="confirmation-text">
+            We've sent a confirmation email to {form.email}.<br/>
+            You will receive updates about your order status.
+          </p>
+          <div className="order-details">
+            <h3>Order Summary</h3>
+            <div className="summary-row">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Shipping</span>
+              <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+            </div>
+            <div className="summary-total">
+              <span>Total</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+          </div>
+          <OrderTracking currentStep={1} />
+          <div className="action-buttons">
+            <a href="/products" className="continue-shopping">Continue Shopping</a>
+            <a href="/account" className="view-order">View Order</a>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container checkout-container">
-      <h2>Checkout</h2>
-      <form className="checkout-form" onSubmit={handleSubmit} autoComplete="off" noValidate>
-        <div className="checkout-fields">
-          <input name="name" value={form.name} onChange={handleChange} placeholder="Full Name" required />
-          {errors.name && <span className="checkout-error">{errors.name}</span>}
-          <input name="email" value={form.email} onChange={handleChange} placeholder="Email" type="email" required />
-          {errors.email && <span className="checkout-error">{errors.email}</span>}
-          <input name="address" value={form.address} onChange={handleChange} placeholder="Address" required />
-          {errors.address && <span className="checkout-error">{errors.address}</span>}
-          <div className="checkout-row">
-            <input name="city" value={form.city} onChange={handleChange} placeholder="City" required />
-            <input name="state" value={form.state} onChange={handleChange} placeholder="State" required />
-            <input name="zip" value={form.zip} onChange={handleChange} placeholder="ZIP" required />
-          </div>
-          {(errors.city || errors.state || errors.zip) && (
-            <div className="checkout-error-row">
-              {errors.city && <span className="checkout-error">{errors.city}</span>}
-              {errors.state && <span className="checkout-error">{errors.state}</span>}
-              {errors.zip && <span className="checkout-error">{errors.zip}</span>}
+      <h1 className="checkout-title">Checkout</h1>
+      <div className="checkout-layout">
+        <form className="checkout-form" onSubmit={handleSubmit} autoComplete="off" noValidate>
+          <div className="form-section">
+            <h2>Contact Information</h2>
+            <div className="checkout-user-info">
+              <p>Logged in as: <strong>{user.email}</strong></p>
             </div>
-          )}
-          <div className="checkout-row">
-            <label className="pay-label"><input type="radio" name="payment" value="card" checked={form.payment === "card"} onChange={handleChange} /> Card</label>
-            <label className="pay-label"><input type="radio" name="payment" value="cod" checked={form.payment === "cod"} onChange={handleChange} /> Cash on Delivery</label>
+            <div className="form-group" style={{ display: 'none' }}>
+              <input 
+                type="email"
+                name="email"
+                value={form.email}
+                readOnly
+              />
+            </div>
           </div>
-          {form.payment === "card" && (
-            <div className="checkout-card-fields">
-              <div className="card-input-row">
-                <input
-                  name="cardNumber"
-                  value={form.cardNumber}
-                  onChange={handleChange}
-                  placeholder="Card Number"
-                  maxLength={16}
-                  required
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                  className="card-number-input"
-                />
-                {cardType && (
-                  <span className={`card-icon card-icon-${cardType}`}></span>
+
+          <div className="form-section">
+            <h2>Shipping Address</h2>
+            {user.savedAddress && (
+              <div className="saved-address">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={useDefaultAddress}
+                    onChange={(e) => {
+                      setUseDefaultAddress(e.target.checked);
+                      if (e.target.checked) {
+                        setForm(prev => ({
+                          ...prev,
+                          address: user.savedAddress.address,
+                          city: user.savedAddress.city,
+                          state: user.savedAddress.state,
+                          zip: user.savedAddress.zip
+                        }));
+                      }
+                    }}
+                  />
+                  Use saved address
+                </label>
+                {useDefaultAddress && (
+                  <div className="default-address">
+                    <p>{user.savedAddress.address}</p>
+                    <p>{user.savedAddress.city}, {user.savedAddress.state} {user.savedAddress.zip}</p>
+                  </div>
                 )}
               </div>
-              {errors.cardNumber && <span className="checkout-error">{errors.cardNumber}</span>}
-              <div className="checkout-row">
-                <input
-                  name="cardExpiry"
-                  value={form.cardExpiry}
+            )}
+            
+            {(!user.savedAddress || !useDefaultAddress) && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="name">Full Name</label>
+                  <input 
+                    id="name"
+                    name="name" 
+                    value={form.name} 
+                    onChange={handleChange} 
+                    required 
+                    className={errors.name ? 'error' : ''}
+                    disabled={isSubmitting}
+                  />
+                  {errors.name && <span className="error-message">{errors.name}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="address">Address</label>
+                  <AddressAutocomplete
+                    onSelect={handleAddressSelect}
+                    disabled={isSubmitting}
+                  />
+                  {errors.address && <span className="error-message">{errors.address}</span>}
+                </div>
+
+                <div className="form-row three-cols">
+                  <div className="form-group">
+                    <label htmlFor="city">City</label>
+                    <input 
+                      id="city"
+                      name="city" 
+                      value={form.city} 
+                      onChange={handleChange} 
+                      required 
+                      className={errors.city ? 'error' : ''}
+                      disabled={isSubmitting}
+                      readOnly
+                    />
+                    {errors.city && <span className="error-message">{errors.city}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="state">State</label>
+                    <input 
+                      id="state"
+                      name="state" 
+                      value={form.state} 
+                      onChange={handleChange} 
+                      required 
+                      className={errors.state ? 'error' : ''}
+                      disabled={isSubmitting}
+                      readOnly
+                    />
+                    {errors.state && <span className="error-message">{errors.state}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="zip">ZIP Code</label>
+                    <input 
+                      id="zip"
+                      name="zip" 
+                      value={form.zip} 
+                      onChange={handleChange} 
+                      required 
+                      className={errors.zip ? 'error' : ''}
+                      disabled={isSubmitting}
+                      pattern="\d{4,10}"
+                      readOnly
+                    />
+                    {errors.zip && <span className="error-message">{errors.zip}</span>}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="form-section">
+            <h2>Payment Method</h2>
+            <div className="payment-options">
+              <label className="pay-label">
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="card" 
+                  checked={form.payment === "card"} 
                   onChange={handleChange}
-                  placeholder="MM/YYYY"
-                  type="month"
-                  required
-                  style={{ maxWidth: 140 }}
-                  autoComplete="cc-exp"
-                />
-                <input
-                  name="cardCVV"
-                  value={form.cardCVV}
+                  disabled={isSubmitting}
+                /> 
+                Credit/Debit Card
+              </label>
+              <label className="pay-label">
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="cod" 
+                  checked={form.payment === "cod"} 
                   onChange={handleChange}
-                  placeholder="CVV"
-                  maxLength={3}
-                  required
-                  inputMode="numeric"
-                  autoComplete="cc-csc"
-                  style={{ maxWidth: 80 }}
-                />
+                  disabled={isSubmitting}
+                /> 
+                Cash on Delivery
+              </label>
+            </div>
+
+            {form.payment === "card" && (
+              <div className="checkout-card-fields">
+                <div className="form-group">
+                  <label htmlFor="cardNumber">Card Number</label>
+                  <div className="card-input-row">
+                    <input
+                      id="cardNumber"
+                      name="cardNumber"
+                      value={form.cardNumber}
+                      onChange={handleChange}
+                      placeholder="1234 5678 9012 3456"
+                      maxLength={16}
+                      required
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      className={`card-number-input ${errors.cardNumber ? 'error' : ''}`}
+                      disabled={isSubmitting}
+                    />
+                    {cardType && (
+                      <span className={`card-icon card-icon-${cardType}`}></span>
+                    )}
+                  </div>
+                  {errors.cardNumber && <span className="error-message">{errors.cardNumber}</span>}
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="cardExpiry">Expiry Date</label>
+                    <input
+                      id="cardExpiry"
+                      name="cardExpiry"
+                      value={form.cardExpiry}
+                      onChange={handleChange}
+                      type="month"
+                      required
+                      className={errors.cardExpiry ? 'error' : ''}
+                      style={{ maxWidth: 140 }}
+                      autoComplete="cc-exp"
+                      disabled={isSubmitting}
+                    />
+                    {errors.cardExpiry && <span className="error-message">{errors.cardExpiry}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="cardCVV">CVV</label>
+                    <input
+                      id="cardCVV"
+                      name="cardCVV"
+                      value={form.cardCVV}
+                      onChange={handleChange}
+                      placeholder="123"
+                      maxLength={3}
+                      required
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
+                      className={errors.cardCVV ? 'error' : ''}
+                      style={{ maxWidth: 80 }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.cardCVV && <span className="error-message">{errors.cardCVV}</span>}
+                  </div>
+                </div>
               </div>
-              <div className="checkout-error-row">
-                {errors.cardExpiry && <span className="checkout-error">{errors.cardExpiry}</span>}
-                {errors.cardCVV && <span className="checkout-error">{errors.cardCVV}</span>}
-              </div>
+            )}
+          </div>
+
+          <div className="checkout-summary">
+            <h3>Order Summary</h3>
+            {cart.length === 0 ? (
+              <p>No items in cart.</p>
+            ) : (
+              <>
+                <ul className="checkout-list">
+                  {cart.map(item => (
+                    <li key={item.id} className="checkout-item">
+                      <span>{item.title} × {item.quantity}</span>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="summary-row">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="summary-row">
+                  <span>Shipping</span>
+                  <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                </div>
+                <div className="summary-total">
+                  <span>Total</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {errors.submit && (
+            <div className="form-error">
+              <span className="error-message">{errors.submit}</span>
             </div>
           )}
-        </div>
-        <div className="checkout-summary">
-          <h3>Order Summary</h3>
-          {cart.length === 0 ? <p>No items in cart.</p> : (
-            <ul className="checkout-list">
-              {cart.map(item => (
-                <li key={item.id}>
-                  <span>{item.title} x {item.quantity}</span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="checkout-total">Total: <b>${total.toFixed(2)}</b></div>
-        </div>
-        <button className="checkout-btn" type="submit" disabled={cart.length === 0}>Place Order</button>
-      </form>
+
+          <button 
+            className="checkout-btn" 
+            type="submit" 
+            disabled={cart.length === 0 || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="spinner"></span>
+                Processing...
+              </>
+            ) : (
+              'Place Order'
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

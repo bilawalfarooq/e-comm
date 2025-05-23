@@ -3,22 +3,45 @@ import "../styles/App.css";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 import { ToastContext } from "../context/CartContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product }) => {
+  const { cart, addToCart, removeFromCart, decrementFromCart } = useContext(CartContext);
   const { wishlist, addToWishlist, removeFromWishlist } = useContext(WishlistContext);
   const { showToast } = useContext(ToastContext);
-  const { cart, addToCart, removeFromCart, decrementFromCart } = useContext(CartContext);
+  const navigate = useNavigate();
+
   const cartItem = cart.find((item) => item.id === product.id);
   const isInCart = !!cartItem;
   const quantity = cartItem ? cartItem.quantity : 0;
   const isWishlisted = wishlist.some((item) => item.id === product.id);
 
-  const handleCart = () => {
-    onAddToCart(product);
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
     showToast("Added to cart!", "success");
   };
-  const handleWishlist = () => {
+
+  const handleGoToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate('/cart');
+  };
+
+  const handleQuantityChange = (e, action) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (action === 'increase') {
+      addToCart(product);
+    } else {
+      decrementFromCart(product.id);
+    }
+  };
+
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isWishlisted) {
       removeFromWishlist(product.id);
       showToast("Removed from wishlist", "info");
@@ -29,44 +52,75 @@ const ProductCard = ({ product, onAddToCart }) => {
   };
 
   return (
-    <Link to={`/product/${product.id}`} className="product-card" style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}>
-      <img src={product.images[0]} alt={product.title} className="product-image" />
-      <h3>{product.title}</h3>
-      <p className="product-price">${product.price}</p>
-      {isInCart ? (
-        <div className="cart-qty-controls">
-          <button
-            className="qty-btn"
-            onClick={e => {
-              e.preventDefault();
-              decrementFromCart(product.id);
-            }}
-          >-</button>
-          <span className="qty-value">{quantity}</span>
-          <button
-            className="qty-btn"
-            onClick={e => {
-              e.preventDefault();
-              addToCart(product);
-            }}
-          >+</button>
-        </div>
-      ) : (
-        <button
-          onClick={e => { e.preventDefault(); handleCart(); }}
-          className="add-to-cart-btn"
-        >
-          Add to Cart
-        </button>
-      )}
+    <div className="product-card">
       <button
-        onClick={e => { e.preventDefault(); handleWishlist(); }}
-        className={"wishlist-btn"}
-        style={{ marginTop: 8 }}
+        onClick={handleWishlist}
+        className={`wishlist-btn ${isWishlisted ? 'wishlisted' : ''}`}
+        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
       >
-        {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+        {isWishlisted ? '❤️' : '🤍'}
       </button>
-    </Link>
+      
+      <Link to={`/product/${product.id}`} className="product-card-link">
+        <div className="product-image-wrapper">
+          <div className="product-image-container">
+            <img src={product.images?.[0] || product.thumbnail} alt={product.title} className="product-image" />
+          </div>
+        </div>
+        <div className="product-info">
+          <h3 className="product-title">{product.title}</h3>
+          <div className="product-meta">
+            <span className="product-price">${product.price.toFixed(2)}</span>
+            {product.rating && (
+              <div className="product-rating">
+                <span>⭐</span>
+                <span>{product.rating.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      <div className="product-actions">
+        {isInCart ? (
+          <div className="cart-controls">
+            <div className="quantity-controls">
+              <button
+                className="qty-btn"
+                onClick={(e) => handleQuantityChange(e, 'decrease')}
+                aria-label="Decrease quantity"
+              >
+                <span>−</span>
+              </button>
+              <span className="qty-display">{quantity}</span>
+              <button
+                className="qty-btn"
+                onClick={(e) => handleQuantityChange(e, 'increase')}
+                aria-label="Increase quantity"
+              >
+                <span>+</span>
+              </button>
+            </div>
+            <button
+              className="go-to-cart-btn"
+              onClick={handleGoToCart}
+              aria-label="Go to cart"
+            >
+              <span>View Cart</span>
+              <span className="btn-icon">→</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            className="add-to-cart-btn"
+            aria-label="Add to cart"
+          >
+            Add to Cart
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
