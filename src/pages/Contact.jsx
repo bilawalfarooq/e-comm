@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { FaUser, FaPhone, FaEnvelope, FaMapMarker } from "react-icons/fa";
 
 const Contact = () => (
   <div className="contact-gradient-bg">
@@ -28,7 +28,7 @@ const Contact = () => (
             <h3 className="contact-info-title">Get in touch</h3>
             <div className="contact-info-item"><FaPhone className="contact-info-icon" /> +1 234 567 890</div>
             <div className="contact-info-item"><FaEnvelope className="contact-info-icon" /> support@shopease.com</div>
-            <div className="contact-info-item"><FaMapMarkerAlt className="contact-info-icon" /> 123 E-Commerce St, Online City</div>
+            <div className="contact-info-item"><FaMapMarker className="contact-info-icon" /> 123 E-Commerce St, Online City</div>
           </div>
         </div>
       </div>
