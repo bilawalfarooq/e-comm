@@ -49,7 +49,7 @@ const Category = () => {
   };
 
   return (
-    <div className="container category-container">
+    <div className="category-page glass-card">
       <h2>
         {category 
           ? `Category: ${category.charAt(0).toUpperCase()}${category.slice(1)}`

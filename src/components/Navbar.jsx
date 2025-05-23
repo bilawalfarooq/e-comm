@@ -8,7 +8,7 @@ const Navbar = () => {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <nav className="navbar">
+    <nav className="navbar glass-card">
       <div className="navbar__brand">
         <Link to="/">ShopEase</Link>
       </div>

@@ -43,7 +43,7 @@ const AdminPanel = () => {
   const chartData = products.map((p) => ({ name: p.title, Stock: p.stock }));
 
   return (
-    <div className="container admin-panel-container">
+    <div className="admin-panel-page glass-card">
       <h2>Admin Panel</h2>
       {/* Product Stock Bar Chart */}
       <div style={{ width: "100%", height: 320, marginBottom: 32 }}>

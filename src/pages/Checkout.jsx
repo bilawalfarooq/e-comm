@@ -131,7 +131,7 @@ const Checkout = () => {
 
   if (submitted) {
     return (
-      <div className="container checkout-container">
+      <div className="container checkout-container glass-card">
         <div className="order-success">
           <svg className="success-icon" viewBox="0 0 24 24" width="64" height="64">
             <path fill="none" stroke="currentColor" strokeWidth="2" d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
@@ -169,9 +169,9 @@ const Checkout = () => {
   }
 
   return (
-    <div className="container checkout-container">
+    <div className="container checkout-container glass-card">
       <h1 className="checkout-title">Checkout</h1>
-      <div className="checkout-layout">
+      <div className="checkout-layout glass-card">
         <form className="checkout-form" onSubmit={handleSubmit} autoComplete="off" noValidate>
           <div className="form-section">
             <h2>Contact Information</h2>
@@ -389,7 +389,7 @@ const Checkout = () => {
             )}
           </div>
 
-          <div className="checkout-summary">
+          <div className="checkout-summary glass-card">
             <h3>Order Summary</h3>
             {cart.length === 0 ? (
               <p>No items in cart.</p>

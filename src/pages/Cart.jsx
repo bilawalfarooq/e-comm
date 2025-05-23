@@ -9,7 +9,7 @@ const Cart = () => {
   const total = subtotal + shipping;
 
   return (
-    <div className="container cart-page">
+    <div className="container cart-page glass-card">
       <h1 className="cart-title">Shopping Cart</h1>
       {cart.length === 0 ? (
         <div className="empty-cart">
@@ -26,7 +26,7 @@ const Cart = () => {
               <CartItem key={item.id} item={item} onRemove={removeFromCart} />
             ))}
           </div>
-          <div className="cart-summary">
+          <div className="cart-summary glass-card">
             <h2>Order Summary</h2>
             <div className="summary-row">
               <span>Subtotal</span>

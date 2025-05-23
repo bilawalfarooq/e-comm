@@ -52,10 +52,10 @@ const Home = () => {
   return (
     <main className="home-main">
       {/* Hero Slider */}
-      <section className="hero-section">
+      <section className="hero-section glass-card">
         {heroSlides.map((s, idx) => (
           <div
-            className={`hero-slide${slide === idx ? " active" : ""}`}
+            className={`hero-slide glass-card${slide === idx ? " active" : ""}`}
             key={idx}
             style={{ background: s.bg }}
           >
@@ -88,7 +88,7 @@ const Home = () => {
 
       {/* Featured Categories */}
       {!loading && (
-        <section className="categories-section">
+        <section className="categories-section glass-card">
           <div className="section-header">
             <h2>Featured Categories</h2>
             <Link to="/categories" className="view-all">View All</Link>
@@ -96,7 +96,7 @@ const Home = () => {
           <div className="categories-grid">            {categories.slice(0, 6).map((category, idx) => {
               // Ensure category is a string and handle the case
               const categoryStr = String(category);
-              return (                <Link to={`/category?name=${encodeURIComponent(categoryStr)}`} className="category-card" key={idx}>
+              return (                <Link to={`/category?name=${encodeURIComponent(categoryStr)}`} className="category-card glass-card" key={idx}>
                   <div className="category-icon">
                     <img 
                       src={`https://dummyimage.com/80x80/2563eb/fff&text=${categoryStr.charAt(0).toUpperCase()}`} 
@@ -111,14 +111,14 @@ const Home = () => {
         </section>
       )}      {/* Featured Products */}
       {!loading && products.length > 0 && (
-        <section className="featured-products">
+        <section className="featured-products glass-card">
           <div className="section-header">
             <h2>Featured Products</h2>
             <Link to="/products" className="view-all">View All</Link>
           </div>
           <div className="featured-products-grid">
             {products.slice(0, 8).map(product => (
-              <div className="featured-product-card" key={product.id}>
+              <div className="featured-product-card glass-card" key={product.id}>
                 <Link to={`/product/${product.id}`}>
                   <div className="product-image-container">
                     <img src={product.thumbnail} alt={product.title} className="product-image" />
