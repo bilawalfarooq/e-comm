@@ -1,4 +1,5 @@
 import React, { createContext, useState } from "react";
+import API_BASE_URL, { apiRequest } from "../api";
 
 export const AuthContext = createContext();
 
@@ -22,38 +23,49 @@ export const AuthProvider = ({ children }) => {
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
   });
+  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
 
-  const login = (email, password) => {
-    // For demo: check localStorage users
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const found = users.find(u => u.email === email && u.password === password);
-    if (found) {
-      setUser(found);
-      localStorage.setItem("user", JSON.stringify(found));
+  const login = async (email, password) => {
+    try {
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
       return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
     }
-    return { success: false, message: "Invalid credentials" };
   };
 
-  const signup = (userData) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.find(u => u.email === userData.email)) {
-      return { success: false, message: "Email already exists" };
+  const signup = async (userData) => {
+    try {
+      const data = await apiRequest("/auth/signup", {
+        method: "POST",
+        body: userData,
+      });
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
     }
-    users.push(userData);
-    localStorage.setItem("users", JSON.stringify(users));
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    return { success: true };
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

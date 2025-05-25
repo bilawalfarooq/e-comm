@@ -19,6 +19,9 @@ router.post(
 // Get all orders (admin) or user orders
 router.get('/', authenticate, orderController.getOrders);
 
+// --- Analytics endpoint ---
+router.get('/analytics', authenticate, authorizeRoles('admin'), orderController.getOrderAnalytics);
+
 // Get single order
 router.get('/:id', authenticate, orderController.getOrder);
 
@@ -38,5 +41,8 @@ router.delete(
   authorizeRoles('admin'),
   orderController.deleteOrder
 );
+
+// Download invoice PDF (admin or order owner)
+router.get('/:id/invoice', authenticate, orderController.downloadInvoice);
 
 module.exports = router;

@@ -14,13 +14,13 @@ const Signup = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.match(/^\S+@\S+\.\S+$/) || form.password.length < 4) {
       setError("Please enter valid details.");
       return;
     }
-    const res = signup(form);
+    const res = await signup(form);
     if (res.success) {
       setSuccess(true);
       setTimeout(() => navigate("/login"), 1200);

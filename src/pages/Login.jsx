@@ -14,13 +14,13 @@ const Login = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) || form.password.length < 4) {
       setError("Please enter valid credentials.");
       return;
     }
-    const res = login(form.email, form.password);
+    const res = await login(form.email, form.password);
     if (res.success) {
       // If redirected from a protected route, go back to that page
       const from = location.state?.from;

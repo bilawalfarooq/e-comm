@@ -22,6 +22,7 @@ const reviewRoutes = require('./routes/review');
 const wishlistRoutes = require('./routes/wishlist');
 const recentlyViewedRoutes = require('./routes/recentlyViewed');
 const userRoutes = require('./routes/user');
+const categoryRoutes = require('./routes/category');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -31,6 +32,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/recently-viewed', recentlyViewedRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
